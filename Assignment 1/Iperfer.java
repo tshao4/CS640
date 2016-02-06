@@ -14,10 +14,10 @@ import java.util.TimerTask;
 
 public class Iperfer {
 	public static void main(String[] args){
-		String modeIndicator = "";
+		String modeIndicator = null;
 		int portNum = -1;
 		int time = Integer.MIN_VALUE;
-		String hostName = "";
+		String hostName = null;
 					
 		for(int i = 0; i < args.length; i++){
 			switch (args[i].toLowerCase()) {
@@ -25,11 +25,11 @@ public class Iperfer {
 					if(modeIndicator == null) {
 						modeIndicator = "c";
 						if(args.length != 7){
-							System.out.println("Error: missing or additional arguments");
+							System.out.println("Error: missing or additional arguments1");
 							return;
 						}
 					} else {
-						System.out.println("Error: missing or additional arguments");
+						System.out.println("Error: missing or additional arguments2");
 						return;
 					}
 					break;
@@ -37,11 +37,11 @@ public class Iperfer {
 					if(modeIndicator == null) {
 						modeIndicator = "s";
 						if(args.length != 3){
-							System.out.println("Error: missing or additional arguments");
+							System.out.println("Error: missing or additional arguments3");
 							return;
 						}
 					} else {
-						System.out.println("Error: missing or additional arguments");
+						System.out.println("Error: missing or additional arguments4");
 						return;
 					}
 					break;
@@ -49,7 +49,7 @@ public class Iperfer {
 					if(hostName == null){
 						hostName = args[++i];
 					} else {
-						System.out.println("Error: missing or additional arguments");
+						System.out.println("Error: missing or additional arguments5");
 						return;
 					}
 					break;
@@ -60,7 +60,7 @@ public class Iperfer {
 							System.out.println("Error: port number must be in the range 1024 to 65535");
 						}
 					} else {
-						System.out.println("Error: missing or additional arguments");
+						System.out.println("Error: missing or additional arguments6");
 						return;
 					}
 					break;
@@ -68,11 +68,11 @@ public class Iperfer {
 					if(time == Integer.MIN_VALUE){
 						time = Integer.parseInt(args[++i]);
 						if(time < 0){
-							System.out.println("Error: missing or additional arguments");
+							System.out.println("Error: missing or additional arguments7");
 							return;
 						}
 					} else {
-						System.out.println("Error: missing or additional arguments");
+						System.out.println("Error: missing or additional arguments8");
 						return;
 					}
 					break;
@@ -81,47 +81,36 @@ public class Iperfer {
 			}
 		}
 		
-		if(modeIndicator.equalsIgnoreCase("-c")){
+		if(modeIndicator.equalsIgnoreCase("c")){
 			try{
-				Counter counter = new Counter();
+				double counter = 0;
 				Socket echoSocket = new Socket(hostName, portNum);
 				byte[] data = new byte[1000];
 				Arrays.fill(data, (byte) 0 );
 				DataOutputStream out = new DataOutputStream(echoSocket.getOutputStream());
-				Timer timer = new Timer();
-				TimerTask task = new TimerTask(){
-					@Override
-					public void run(){
-						try {
-							out.write(data);
-							counter.increment();
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							System.out.println("output stream error");
-						} 
-						
-					}
-					
-				};
-				time = time * 1000;
-				timer.schedule(task, 0, time);
+				long begin = System.currentTimeMillis();
+				while(System.currentTimeMillis() - begin < time * 1000) {
+					out.write(data);
+					counter++;
+				}
 				out.close();
 				echoSocket.close();
 				
-				double dataRate = counter.getValue() / 1000 * 8 / time;
+				double dataRate = counter / 1000 * 8 / time;
 				
-				System.out.println(String.format("sent=%1 KB rate=$2 Mbps", counter.getValue(), dataRate));
+				System.out.println("sent=" + counter + " KB rate=" + dataRate + " Mbps");
 			} catch (Exception ex){
 				System.out.println("Socket error");
+				ex.printStackTrace(System.out);
 			}
 			
-		} else if(modeIndicator.equalsIgnoreCase("-s")){
+		} else if(modeIndicator.equalsIgnoreCase("s")){
 			try{
 				ServerSocket serverSocket = new ServerSocket(portNum);
 				Socket clientSocket = serverSocket.accept();
 				DataInputStream in = new DataInputStream(clientSocket.getInputStream()); 
 				byte[] data = new byte[1000];
-				int counter = 0;
+				double counter = 0;
 				long startTime = System.currentTimeMillis();
 				long endTime = startTime;
 				while(true){
@@ -137,12 +126,13 @@ public class Iperfer {
 				in.close();
 				clientSocket.close();
 				serverSocket.close();
-				
+				counter = counter / 1000;
 				long totalTime = endTime - startTime;
-				double dataRate = counter / 1000 * 8 / totalTime;
-				System.out.println(String.format("sent=%1 KB rate=$2 Mbps", counter, dataRate));
+				double dataRate = counter * 8 / totalTime;
+				System.out.println("sent=" + counter + " KB rate=" + dataRate + " Mbps");
 			} catch(Exception ex){
 				System.out.println("Server Read error");
+				ex.printStackTrace(System.out);
 			}
 		} else{
 			System.out.println("Error: missing or additional arguments");
@@ -150,21 +140,5 @@ public class Iperfer {
 		}
 		
 		
-	}
-}
-
-
-class Counter{
-	private int counter;
-	public Counter(){
-		counter = 0;
-	}
-	
-	public int getValue(){
-		return counter;
-	}
-	
-	public void increment(){
-		counter++;
 	}
 }
