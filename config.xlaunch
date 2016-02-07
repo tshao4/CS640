@@ -1,0 +1,2 @@
+<?xml version="1.0"?>
+<XLaunch xmlns="http://www.straightrunning.com/XmingNotes" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.straightrunning.com/XmingNotes XLaunch.xsd" WindowMode="MultiWindow" ClientMode="StartProgram" Program="xterm" ClientStart="PuTTY" PW="tenthE67" RemoteHost="mininet-12.cs.wisc.edu" RemoteUser="mininet" ExtraSSH="-X" Display="0" Clipboard="true"/>
