@@ -2,6 +2,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.*;
 import java.util.Arrays;
+import java.lang.NumberFormatException;
 
 public class Iperfer {
 	public static void main(String[] args){
@@ -16,11 +17,11 @@ public class Iperfer {
 					if(modeIndicator == null) {
 						modeIndicator = "c";
 						if(args.length != 7){
-							System.out.println("Error: missing or additional arguments1");
+							System.out.println("Error: missing or additional arguments - client mode");
 							return;
 						}
 					} else {
-						System.out.println("Error: missing or additional arguments2");
+						System.out.println("Error: more than one mode flag (1)");
 						return;
 					}
 					break;
@@ -28,46 +29,59 @@ public class Iperfer {
 					if(modeIndicator == null) {
 						modeIndicator = "s";
 						if(args.length != 3){
-							System.out.println("Error: missing or additional arguments3");
+							System.out.println("Error: missing or additional arguments - server mode");
 							return;
 						}
 					} else {
-						System.out.println("Error: missing or additional arguments4");
+						System.out.println("Error: more than one mode flag (2)");
 						return;
 					}
 					break;
 				case "-h" :
-					if(hostName == null){
+					if(hostName == null && i + 1 <= args.length){
 						hostName = args[++i];
 					} else {
-						System.out.println("Error: missing or additional arguments5");
+						System.out.println("Error: missing or additional arguments - h flag");
 						return;
 					}
 					break;
 				case "-p" :
-					if(portNum < 0){
-						portNum = Integer.parseInt(args[++i]);
+					if(portNum < 0 && i + 1 <= args.length){
+						try {
+							portNum = Integer.parseInt(args[++i]);
+						}catch(NumberFormatException ex) {
+							System.out.println("Error: invalid port number");
+							return;
+						}
+						
 						if(portNum < 1024 || portNum > 65535){
 							System.out.println("Error: port number must be in the range 1024 to 65535");
+							return;
 						}
 					} else {
-						System.out.println("Error: missing or additional arguments6");
+						System.out.println("Error: missing or additional arguments - p flag");
 						return;
 					}
 					break;
 				case "-t" :
-					if(time == Integer.MIN_VALUE){
-						time = Integer.parseInt(args[++i]);
-						if(time < 0){
-							System.out.println("Error: missing or additional arguments7");
+					if(time == Integer.MIN_VALUE && i + 1 <= args.length){
+						try {
+							time = Integer.parseInt(args[++i]);
+						}catch(NumberFormatException ex) {
+							System.out.println("Error: invalid time");
+						}
+
+						if(time <= 0){
+							System.out.println("Error: time must be a positive integer");
 							return;
 						}
 					} else {
-						System.out.println("Error: missing or additional arguments8");
+						System.out.println("Error: missing or additional arguments - t flag");
 						return;
 					}
 					break;
 				default:
+					System.out.println("Error: no matching flag");
 					break;
 			}
 		}
@@ -120,16 +134,15 @@ public class Iperfer {
 				counter = counter / 1000;
 				long totalTime = endTime - startTime;
 				double dataRate = counter * 8 / totalTime;
-				System.out.println("sent=" + counter + " KB rate=" + dataRate + " Mbps");
+				System.out.println("received=" + counter + " KB rate=" + dataRate + " Mbps");
 			} catch(Exception ex){
 				System.out.println("Server Read error");
 				ex.printStackTrace(System.out);
 			}
 		} else{
-			System.out.println("Error: missing or additional arguments");
+			System.out.println("Error: missing mode flag");
 			return;
 		}
-		
 		
 	}
 }
