@@ -88,22 +88,27 @@ public class Iperfer {
 		
 		if(modeIndicator.equalsIgnoreCase("c")){
 			try{
-				double counter = 0;
+				double dataKB = 0;
 				Socket echoSocket = new Socket(hostName, portNum);
 				byte[] data = new byte[1000];
 				Arrays.fill(data, (byte) 0 );
 				DataOutputStream out = new DataOutputStream(echoSocket.getOutputStream());
-				long begin = System.currentTimeMillis();
-				while(System.currentTimeMillis() - begin < time * 1000) {
+				double timeToRun = time * Math.pow(10, 9);
+				double totalTime = 0;
+				long startTime, endTime;
+				while(totalTime < timeToRun) {
+					startTime = System.nanoTime();
 					out.write(data);
-					counter++;
+					endTime = System.nanoTime();
+					totalTime += endTime - startTime;
+					dataKB++;
 				}
 				out.close();
 				echoSocket.close();
+				totalTime = totalTime / Math.pow(10, 9);;
+				double dataRate = dataKB / 1000 * 8 / totalTime;
 				
-				double dataRate = counter / 1000 * 8 / time;
-				
-				System.out.println("sent=" + counter + " KB rate=" + dataRate + " Mbps");
+				System.out.println("sent=" + dataKB + " KB rate=" + dataRate + " Mbps");
 			} catch (Exception ex){
 				System.out.println("Socket error");
 				ex.printStackTrace(System.out);
@@ -115,26 +120,26 @@ public class Iperfer {
 				Socket clientSocket = serverSocket.accept();
 				DataInputStream in = new DataInputStream(clientSocket.getInputStream()); 
 				byte[] data = new byte[1000];
-				double counter = 0;
-				long startTime = System.currentTimeMillis();
-				long endTime = startTime;
+				double dataB = 0;
+				long startTime, endTime;
+				double totalTime = 0;
+
 				while(true){
+					startTime = System.nanoTime();
 					int byteNum = in.read(data, 0, 1000);
+					endTime = System.nanoTime();
 					if(byteNum == -1){
-						endTime = System.currentTimeMillis();
 						break;
 					}
-					counter = counter + byteNum;
+					totalTime += endTime - startTime;
+					dataB = dataB + byteNum;
 				}
-				
-				
 				in.close();
 				clientSocket.close();
 				serverSocket.close();
-				counter = counter / 1000;
-				long totalTime = endTime - startTime;
-				double dataRate = counter * 8 / totalTime;
-				System.out.println("received=" + counter + " KB rate=" + dataRate + " Mbps");
+				totalTime = totalTime / Math.pow(10, 9);;
+				double dataRate = dataB / 1000000 * 8 / totalTime;
+				System.out.println("received=" + dataB / 1000 + " KB rate=" + dataRate + " Mbps");
 			} catch(Exception ex){
 				System.out.println("Server Read error");
 				ex.printStackTrace(System.out);
