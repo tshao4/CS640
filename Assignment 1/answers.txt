@@ -1,0 +1,39 @@
+Q2.
+The latency between h1 and h4 should be the sum of the latency of L1, L2 and L3 which is around 80ms + 20ms + 60ms = 160ms
+The throughput should be the minimum among L1, L2, and L3 which is around 20Mbps
+
+Q3.
+Prediction:
+Two pairs:
+	latency: 160ms | 160ms
+	throughput: 10Mbps | 10Mbps
+Three pairs:
+	latency: 160ms | 160ms | 160ms
+	throughput: 6.67Mbps | 6.67Mbps | 6.67Mbps
+Test results:
+Two pairs:
+	latency: 161.077ms | 161.052ms
+	throughput: server 9.95Mbps client 11.92Mbps | server 8.82Mbps client 9.90Mbps
+Three pairs:
+	latency: 161.133ms | 161.207ms | 161.177ms
+	throughput: server 9.29Mbps client 11.44Mbps | server 4.73Mbps client 5.60Mbps | server 4.56Mbps client 5.26Mbps
+For both two pairs and three pairs of hosts, the latency should not be affected since all packets go through the same link. We predicted that the 20Mbps bandwidth would be splited evenly and it is true for two pairs but not for three pairs. The actual bandwidth allocation is 0.5:0.25:0.25 and it seems that the pair that establishes connection first get the highest throughput. We suppose it depends on the actual multiplexing algorithm implementation.
+
+Q4.
+Prediction:
+h1-h4
+	latency: 160ms
+	throughput: 17.78Mbps
+h5-h6
+	latency: 40ms
+	throughput: 22.22Mbps
+Test results:
+h1-h4
+	latency: 161.202ms
+	throughput: server 14.02Mbps client 16.46Mbps
+h5-h6
+	latency: 41.053ms
+	throughput: server 21.60Mbps client 23.95Mbps
+Again, the latency does not change due to the same reason in Q3. In this case, only L2 is shared. h1-h4 has a bandwidth of 20Mbps and h5-h6 25Mbps, so the sum is 45Mbps. However, L2 is only capable of 40Mbps so we split it proportionally. Calculations as follows:
+h1-h4: 40 * ( 20 / 45 ) = 17.78Mbps
+h5-h6: 40 * ( 25 / 45 ) = 22.22Mbps
