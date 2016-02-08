@@ -3,12 +3,13 @@ import java.io.DataOutputStream;
 import java.net.*;
 import java.util.Arrays;
 import java.lang.NumberFormatException;
+import java.lang.IndexOutOfBoundsException;
 
 public class Iperfer {
 	public static void main(String[] args){
 		String modeIndicator = null;
 		int portNum = -1;
-		int time = Integer.MIN_VALUE;
+		double time = Double.MIN_VALUE;
 		String hostName = null;
 					
 		for(int i = 0; i < args.length; i++){
@@ -39,7 +40,13 @@ public class Iperfer {
 					break;
 				case "-h" :
 					if(hostName == null && i + 1 <= args.length){
-						hostName = args[++i];
+						try{
+							hostName = args[++i];
+						}catch(IndexOutOfBoundsException ex) {
+							System.out.println("Error: missing or additional arguments - h flag - IOOBE");
+							return;
+						}
+						
 					} else {
 						System.out.println("Error: missing or additional arguments - h flag");
 						return;
@@ -51,6 +58,9 @@ public class Iperfer {
 							portNum = Integer.parseInt(args[++i]);
 						}catch(NumberFormatException ex) {
 							System.out.println("Error: invalid port number");
+							return;
+						}catch(IndexOutOfBoundsException ex) {
+							System.out.println("Error: missing or additional arguments - p flag - IOOBE");
 							return;
 						}
 						
@@ -64,11 +74,14 @@ public class Iperfer {
 					}
 					break;
 				case "-t" :
-					if(time == Integer.MIN_VALUE && i + 1 <= args.length){
+					if(time == Double.MIN_VALUE && i + 1 <= args.length){
 						try {
-							time = Integer.parseInt(args[++i]);
+							time = Double.parseDouble(args[++i]);
 						}catch(NumberFormatException ex) {
 							System.out.println("Error: invalid time");
+						}catch(IndexOutOfBoundsException ex) {
+							System.out.println("Error: missing or additional arguments - t flag - IOOBE");
+							return;
 						}
 
 						if(time <= 0){
