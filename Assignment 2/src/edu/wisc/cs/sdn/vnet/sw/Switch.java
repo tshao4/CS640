@@ -16,6 +16,7 @@ public class Switch extends Device implements Runnable
 {	
 	private ConcurrentHashMap<String, SwitchEntry> switchMap;
 	private Thread thr;
+	private final boolean dbg = false;
 
 	public void run() {
 		try{
@@ -25,7 +26,7 @@ public class Switch extends Device implements Runnable
 						long timeLeft = System.currentTimeMillis() - en.getValue().getLastUpdate();
 						if (timeLeft >= 15000L) {
 							switchMap.remove(en.getKey());
-							System.out.println("Entry Timeout: " + timeLeft);
+							if (dbg) System.out.println("Entry Timeout: " + timeLeft);
 						}
 					}
 				}
@@ -66,22 +67,22 @@ public class Switch extends Device implements Runnable
 		SwitchEntry entry = switchMap.get(dstMAC);
 		
 		if (entry == null) {
-			System.out.println("Broadcasting...");
+			if (dbg) System.out.println("Broadcasting...");
 			for (Iface ifa : interfaces.values()) {
 				if (!inIface.equals(ifa)) {
 					sendPacket(etherPacket, ifa);
 				}
 			}
 		}else {
-			System.out.println("Sending...");
+			if (dbg) System.out.println("Sending...");
 			sendPacket(etherPacket, entry.getOutIface());
 		}
 
 		if (!switchMap.containsKey(srcMAC)) {
-			System.out.println("Adding new forwarding entry...");
+			if (dbg) System.out.println("Adding new forwarding entry...");
 			switchMap.put(srcMAC, new SwitchEntry(System.currentTimeMillis(), inIface));
 		}else {
-			System.out.println("Updating existing forwarding entry...");
+			if (dbg) System.out.println("Updating existing forwarding entry...");
 			SwitchEntry newEntry = switchMap.get(srcMAC);
 			newEntry.setLastUpdate(System.currentTimeMillis());
 			newEntry.setOutIface(inIface);

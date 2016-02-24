@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +22,7 @@ public class RouteTable
 {
 	/** Entries in the route table */
 	private List<RouteEntry> entries; 
+	private final boolean dbg = false;
 	
 	/**
 	 * Initialize an empty route table.
@@ -40,7 +42,43 @@ public class RouteTable
 			/*****************************************************************/
 			/* TODO: Find the route entry with the longest prefix match      */
 			
-			return null;
+			if (ip < 0) {
+				return null;
+			}
+
+			if (entries == null) {
+				return null;
+			}
+
+			ListIterator<RouteEntry> it = entries.listIterator();
+			int lm = 0;
+			RouteEntry re = null;;
+
+			if (dbg) System.out.println("Lookup RouteTable..." + IPv4.fromIPv4Address(ip));
+			while (it.hasNext()) {
+				RouteEntry curRe = it.next();
+				for (int i = 0; i < 32; i++) {
+					if (ip >>> i == curRe.getDestinationAddress() >>> i) {
+						if (lm < 32 - i) {
+							lm = 32 - i;
+							re = curRe;
+						}else {
+							break;
+						}
+					}
+				}
+			}
+
+			if (dbg)
+				if (re != null) {
+					System.out.println(re.getInterface().getMacAddress().toString());
+					System.out.println("RouteTable Match dstAddr " + IPv4.fromIPv4Address(re.getDestinationAddress()));
+					System.out.println("RouteTable Match gtwAddr " + IPv4.fromIPv4Address(re.getGatewayAddress()));	
+				}else {
+					System.out.println("RouteTable No Match");
+				}
+
+			return re;
 			
 			/*****************************************************************/
         }
