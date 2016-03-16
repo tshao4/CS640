@@ -1,0 +1,17 @@
+Metadata-Version: 1.1
+Name: cs640
+Version: 0.0.0
+Summary: Network controller for CS640 Assignments
+Home-page: UNKNOWN
+Author: UNKNOWN
+Author-email: huangty@stanford.edu agember@cs.wisc.edu
+License: GPL
+Description: Insert longer description here.
+              
+Keywords: stanford cs144 uw-madison cs640
+Platform: UNKNOWN
+Classifier: License :: OSI Approved :: GNU General Public License (GPL)
+Classifier: Programming Language :: Python
+Classifier: Development Status :: 1 - Planning
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Internet

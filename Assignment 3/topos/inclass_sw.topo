@@ -1,0 +1,29 @@
+host h1 10.0.1.101/24 - 
+host h2 10.0.1.102/24 -
+host h3 10.0.1.103/24 -
+host h4 10.0.1.104/24 -
+host h5 10.0.1.105/24 -
+host h6 10.0.1.106/24 -
+host h7 10.0.1.107/24 -
+host h8 10.0.1.108/24 -
+host h9 10.0.1.109/24 -
+host h10 10.0.1.110/24 -
+switch s1
+switch s2
+switch s3
+switch s4
+switch s5
+link s1 h1
+link s1 h4
+link s2 h5
+link s2 h6
+link s3 h2
+link s3 h7
+link s4 h8
+link s4 h10
+link s5 h3
+link s5 h9
+link s1 s2
+link s1 s3
+link s1 s5
+link s3 s4
