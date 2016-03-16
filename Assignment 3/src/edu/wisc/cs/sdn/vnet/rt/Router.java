@@ -141,21 +141,27 @@ public class Router extends Device
         // Check if packet is destined for one of router's interfaces
         for (Iface iface : this.interfaces.values())
         {
-        	if (ipPacket.getDestinationAddress() == iface.getIpAddress())
-        	{ 
-        		if (IPv4.PROTOCOL_ICMP == ipPacket.getProtocol())
-        		{
+        	if (ipPacket.getDestinationAddress() == iface.getIpAddress()) 
+        	{
+				byte protocol = ipPacket.getProtocol();
 
-        		}
-        		else 
-        		{
-        			if (debug) System.out.println("DEST_PORT_UNREACHABLE");
-        			sendICMP(DEST_PORT_UNREACHABLE, etherPacket, inIface);
-        		}
+                if(protocol == IPv4.PROTOCOL_TCP || protocol == IPv4.PROTOCOL_UDP) 
+                {
+                	if (debug) System.out.println("DEST_PORT_UNREACHABLE");
+                    sendICMP(DEST_PORT_UNREACHABLE ,etherPacket, inIface);
+                } 
+                else if (protocol == IPv4.PROTOCOL_ICMP) 
+                {
+                    ICMP icmpPacket = (ICMP) ipPacket.getPayload();
 
-        		
-        		return; 
-        	}
+                    if(icmpPacket.getIcmpType() == ICMP.TYPE_ECHO_REQUEST) 
+                    {
+                    	if (debug) System.out.println("ICMP_ECHO_REPLY");
+                        sendICMP(ICMP_ECHO_REPLY ,etherPacket, inIface);
+                    }
+                }
+                return;
+            }
         }
 		
         // Do route lookup and forward
@@ -224,8 +230,8 @@ public class Router extends Device
         if (null == bestMatch)
         {  	
         	if (debug) System.out.println("No best match");
-        	return;   }
-        Iface outIface = bestMatch.getInterface();
+        	return;   
+        }
 
         int nextHop = bestMatch.getGatewayAddress();
         if (0 == nextHop)
@@ -235,29 +241,42 @@ public class Router extends Device
         if (null == arpEntry)
         {  	
         	if (debug) System.out.println("arp miss");
-        	return;   }
+        	return;   
+        }
 
 		ether.setEtherType(Ethernet.TYPE_IPv4);
-		ether.setSourceMACAddress(outIface.getMacAddress().toBytes());
+		ether.setSourceMACAddress(inIface.getMacAddress().toBytes());
 		ether.setDestinationMACAddress(arpEntry.getMac().toBytes());
 
 		ip.setTtl((byte)64);
 		ip.setProtocol(IPv4.PROTOCOL_ICMP);
-		ip.setSourceAddress(inIface.getIpAddress());
 		ip.setDestinationAddress(ipPacket.getSourceAddress());
 
-		byte[] ipHP = ipPacket.serialize();
-		int ipHLength = (int)ipPacket.getHeaderLength() * 4 + 8;
+		byte[] iData;
 
-		byte[] iData = new byte[4 + ipHLength];
+		if (ICMP_ECHO_REPLY != type) 
+		{
+			ip.setSourceAddress(inIface.getIpAddress());
 
-		for (int i = 4; i < ipHLength; i++) {
-			iData[i] = ipHP[i - 4];
+			byte[] ipHP = ipPacket.serialize();
+			int ipHLength = ipPacket.getHeaderLength() * 4;
+
+			iData = new byte[4 + ipHLength + 8];
+
+			Arrays.fill(iData, 0, 4, (byte)0);
+
+			for (int i = 0; i < ipHLength + 8; i++) 
+			{ iData[i + 4] = ipHP[i]; }
 		}
+		else
+		{ 
+			ip.setSourceAddress(ipPacket.getDestinationAddress());
+			iData = ((ICMP)ipPacket.getPayload()).getPayload().serialize();
+		}
+		
 
-		data.setData(iData);
-
-		switch(type) {
+		switch(type) 
+		{
 			case TIME_EXCEEDED:
 				icmp.setIcmpType((byte)11);
 				icmp.setIcmpCode((byte)0);
@@ -274,15 +293,20 @@ public class Router extends Device
 				icmp.setIcmpType((byte)3);
 				icmp.setIcmpCode((byte)3);
 				break;
-			default:
+			case ICMP_ECHO_REPLY:
+				icmp.setIcmpType((byte)0);
+				icmp.setIcmpCode((byte)0);
 				break;
+			default:
+				return;
 		}
 
+		data.setData(iData);
 		ether.setPayload(ip);
 		ip.setPayload(icmp);
 		icmp.setPayload(data);
 
 		if (debug) System.out.println("Send ICMP");
-		this.sendPacket(ether, outIface);
+		this.sendPacket(ether, inIface);
 	}
 }
