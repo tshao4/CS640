@@ -7,6 +7,7 @@ import edu.wisc.cs.sdn.vnet.Iface;
 import net.floodlightcontroller.packet.*;
 
 import java.util.Arrays;
+import java.nio.ByteBuffer;
 
 /**
  * @author Aaron Gember-Jacobson and Anubhavnidhi Abhashkumar
@@ -97,13 +98,31 @@ public class Router extends Device
 		
 		switch(etherPacket.getEtherType())
 		{
-		case Ethernet.TYPE_IPv4:
-			this.handleIpPacket(etherPacket, inIface);
-			break;
+			case Ethernet.TYPE_IPv4:
+				this.handleIpPacket(etherPacket, inIface);
+				break;
+			case Ethernet.TYPE_ARP:
+				this.handleArpPacket(etherPacket, inIface);
 		// Ignore all other packet types, for now
 		}
 		
 		/********************************************************************/
+	}
+
+	private void handleArpPacket(Ethernet etherPacket, Iface inIface)
+	{
+		ARP arpPacket = (ARP)etherPacket.getPayload();
+		int targetIp = ByteBuffer.wrap(arpPacket.getTargetProtocolAddress()).getInt();
+
+		for (Iface iface : this.interfaces.values())
+        {
+        	if (targetIp == iface.getIpAddress()) 
+        	{
+
+        	}
+    	}
+
+
 	}
 	
 	private void handleIpPacket(Ethernet etherPacket, Iface inIface)
