@@ -23,7 +23,7 @@ public class Router extends Device
 	private Map<Integer, List<Ethernet>> arpQueues;
 	private Map<Integer, LocalRipEntry> ripMap;
 
-	private final boolean debug_ARP = true;
+	private final boolean debug_ARP = false;
 	private final boolean debug_RIP = false;
 
 	private final int TIME_EXCEEDED = 0;
@@ -336,6 +336,10 @@ public class Router extends Device
 		if (etherPacket.getEtherType() != Ethernet.TYPE_IPv4)
 			{ return; }
 
+		for (Iface iface : this.interfaces.values()) {
+			arpCache.insert(iface.getMacAddress(), iface.getIpAddress());
+		}
+
 			// Get IP header
 		IPv4 ipPacket = (IPv4)etherPacket.getPayload();
 		System.out.println("Handle IP packet");
@@ -465,13 +469,23 @@ public class Router extends Device
 					MACAddress mac = MACAddress.valueOf(arpPacket.getSenderHardwareAddress());
 					int ip = ByteBuffer.wrap(arpPacket.getSenderProtocolAddress()).getInt();
 					arpCache.insert(mac, ip);
-					List<Ethernet> queue = arpQueues.remove(ip);
-					if (queue != null) 
+
+					if (debug_ARP) System.out.println("Insert arp entry \n" + arpCache.toString());
+					synchronized(arpQueues)
 					{
-						for (Ethernet ether : queue) 
+						if (debug_ARP) {
+							for (Map.Entry<Integer, List<Ethernet>> qEntry: arpQueues.entrySet())
+								System.out.println(IPv4.fromIPv4Address(qEntry.getKey()) + " :: " + IPv4.fromIPv4Address(ip) + " :: " + qEntry.getValue().size());
+						}
+						List<Ethernet> queue = arpQueues.remove(ip);
+						if (queue != null) 
 						{
-							ether.setDestinationMACAddress(mac.toBytes());
-							sendPacket(ether, inIface);
+							if (debug_ARP) System.out.println("Send pending packets");
+							for (Ethernet ether : queue) 
+							{
+								ether.setDestinationMACAddress(mac.toBytes());
+								sendPacket(ether, inIface);
+							}
 						}
 					}
 				}
@@ -523,45 +537,57 @@ public class Router extends Device
 	{
 		IPv4 ipPacket = (IPv4)etherPacket.getPayload();
 		final Integer dstAddr = new Integer(ipPacket.getDestinationAddress());
-		if (arpQueues.containsKey(dstAddr))
+		RouteEntry bestMatch = this.routeTable.lookup(dstAddr);
+
+		if (null == bestMatch)
+		{ return; }
+
+		int temp = bestMatch.getGatewayAddress();
+		if (0 == temp)
+		{ temp = dstAddr; }
+		final int nextHop = temp;
+		synchronized(arpQueues)
 		{
-			List<Ethernet> queue = arpQueues.get(dstAddr);
-			queue.add(etherPacket);
-		}
-		else 
-		{
-			List<Ethernet> queue = new ArrayList<Ethernet>();
-			queue.add(etherPacket);
-			arpQueues.put(dstAddr, queue);
-			TimerTask task = new TimerTask()
+			if (arpQueues.containsKey(nextHop))
 			{
-				int counter = 0;
-				public void run()
+				List<Ethernet> queue = arpQueues.get(nextHop);
+				queue.add(etherPacket);
+			}
+			else 
+			{
+				List<Ethernet> queue = new ArrayList<Ethernet>();
+				queue.add(etherPacket);
+				arpQueues.put(nextHop, queue);
+				TimerTask task = new TimerTask()
 				{
-					if (!arpQueues.containsKey(dstAddr)) 
-					{ 
-						this.cancel(); 
-					}
-					else 
+					int counter = 0;
+					public void run()
 					{
-						if (counter > 2) 
-						{
-							if (debug_ARP) System.out.println("TimeOut\n" + arpCache.toString());
-							arpQueues.remove(dstAddr);
-							sendICMP(DEST_HOST_UNREACHABLE, etherPacket, inIface);
-							this.cancel();
-						} 
+						if (null != arpCache.lookup(nextHop)) 
+						{ 
+							this.cancel(); 
+						}
 						else 
 						{
-							if (debug_ARP) System.out.println("Timer  " + counter);
-							sendArp(ip, ARP_REQUEST, etherPacket, inIface, outIface);
-							counter++;
+							if (counter > 2) 
+							{
+								if (debug_ARP) System.out.println("TimeOut\n" + arpCache.toString());
+								arpQueues.remove(nextHop);
+								sendICMP(DEST_HOST_UNREACHABLE, etherPacket, inIface);
+								this.cancel();
+							} 
+							else 
+							{
+								if (debug_ARP) System.out.println("Timer  " + counter);
+								sendArp(ip, ARP_REQUEST, etherPacket, inIface, outIface);
+								counter++;
+							}
 						}
 					}
-				}
-			};
-			Timer timer = new Timer(true);
-			timer.schedule(task, 0, 1000);
+				};
+				Timer timer = new Timer(true);
+				timer.schedule(task, 0, 1000);
+			}
 		}
 	}
 
