@@ -109,23 +109,26 @@ public class L3Routing implements IFloodlightModule, IOFSwitchListener,
 	{
 		if (host.isAttachedToSwitch()) 
 		{
-			Map<Long, Integer> routes = findBestRoutes(host.getSwitch);
-			OFMatch  = dfMatch(host);
+			Map<Long, Integer> routes = findBestRoutes(host.getSwitch());
+			OFMatch match = dfMatch(host);
 			
-			for (Long id : routes.keySet();) 
+			for (Long id : routes.keySet()) 
 			{
+				OFAction action = new OFActionOutput(routes.get(id));
+				OFInstruction instruction = new OFInstructionApplyActions(
+					Arrays.asList(action));
 				SwitchCommands.installRule(
 						this.getSwitches().get(id), this.table,
 						SwitchCommands.DEFAULT_PRIORITY, match,
-						Arrays.asList(
-								new OFInstructionApplyActions(Arrays.asList(
-										new OFActionOutput(routes.get(id))))));
+						Arrays.asList(instruction));
 			}
 			
+			OFAction action = new OFActionOutput(host.getPort());
+			OFInstruction instruction = new OFInstructionApplyActions(
+				Arrays.asList(action));
 			SwitchCommands.installRule(host.getSwitch(), this.table, 
 					SwitchCommands.DEFAULT_PRIORITY, match, 
-					Arrays.asList(new OFInstructionApplyActions(Arrays.asList(
-							new OFActionOutput(host.getPort())))));
+					Arrays.asList(instruction));
 		}
 	}
 	
@@ -163,10 +166,10 @@ public class L3Routing implements IFloodlightModule, IOFSwitchListener,
 
 	    dist.put(initSwitch.getId(), 0);
 
-	    for (int i = 0; i < this.getSwitches().size()) 
+	    for (int i = 0; i < this.getSwitches().size(); i++) 
 	    {
 	    	links = this.rmDupLink();
-	    	sQueue.add(initSwitch);
+	    	sQueue.add(initSwitch.getId());
 
 	    	while (!sQueue.isEmpty())
 	    	{
@@ -210,7 +213,7 @@ public class L3Routing implements IFloodlightModule, IOFSwitchListener,
 	    return prev;
 	}
 
-	private Collection<Link> getConnectedLinks(long sid, Collection<link> links) 
+	private Collection<Link> getConnectedLinks(long sid, Collection<Link> links) 
 	{
 		Collection<Link> c = new ArrayList<Link>();
 		for (Link l : links)
@@ -220,7 +223,7 @@ public class L3Routing implements IFloodlightModule, IOFSwitchListener,
 				c.add(l);
 			}
 		}
-		return l;
+		return c;
 	}
 
 	private Collection<Link> rmDupLink()
@@ -228,7 +231,7 @@ public class L3Routing implements IFloodlightModule, IOFSwitchListener,
 		Collection<Link> links = new ArrayList<Link>();
 		boolean dup;
 
-    	for(Link l : this.getLinks();) 
+    	for(Link l : this.getLinks()) 
     	{
     		dup = false;
 
@@ -253,7 +256,7 @@ public class L3Routing implements IFloodlightModule, IOFSwitchListener,
 		OFMatch match = new OFMatch();
 		match.setDataLayerType(OFMatch.ETH_TYPE_IPV4);
 		match.setNetworkDestination(host.getIPv4Address());
-		return match
+		return match;
 	}
 
     /**
