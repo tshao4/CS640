@@ -1,0 +1,58 @@
+1.
+	a.
+		There are 12 DNS lookups. There is no redundant lookup.
+	b.
+		a.root-servers.net
+			org, NS, d0.org.afilias-nst.org
+			org, NS, b2.org.afilias-nst.org.
+			org, NS, b0.org.afilias-nst.org.
+			org, NS, c0.org.afilias-nst.info.
+			org, NS, a2.org.afilias-nst.info.
+			org, NS, a0.org.afilias-nst.info.
+			d0.org.afilias-nst.org, A, 199.19.57.1
+			d0.org.afilias-nst.org, AAAA, 2001:500:f::1
+			b2.org.afilias-nst.org, A, 199.249.120.1
+			b2.org.afilias-nst.org, AAAA, 2001:500:48::1
+			b0.org.afilias-nst.org, A, 199.19.54.1
+			b0.org.afilias-nst.org, AAAA, 2001:500:c::1
+			c0.org.afilias-nst.info, A, 199.19.53.1
+			c0.org.afilias-nst.info, AAAA, 2001:500:b::1
+			a2.org.afilias-nst.info, A, 199.249.112.1
+			a2.org.afilias-nst.info, AAAA, 2001:500:40::1
+			a0.org.afilias-nst.info, A, 199.19.56.1
+			a0.org.afilias-nst.info, AAAA, 2001:500:e::1
+		d0.org.afilias-nst.org
+			code.org, NS, ns-1652.awsdns-14.co.uk
+			code.org, NS, ns-1652.awsdns-14.co.uk.
+			code.org, NS, ns-269.awsdns-33.com.
+			code.org, NS, ns-1497.awsdns-59.org.
+			code.org, NS, ns-678.awsdns-20.net.
+			ns-1497.awsdns-59.org, A, 205.251.197.217
+		ns-1497.awsdns-59.org
+			www.code.org, A, 174.129.210.35
+			www.code.org, A, 23.23.167.244
+			www.code.org, A, 107.20.189.132
+			www.code.org, A, 50.17.209.250
+	c.
+		localhost
+			code.org, NS, ns-1652.awsdns-14.co.uk
+			code.org, NS, ns-1652.awsdns-14.co.uk.
+			code.org, NS, ns-269.awsdns-33.com.
+			code.org, NS, ns-1497.awsdns-59.org.
+			code.org, NS, ns-678.awsdns-20.net.
+			ns-1497.awsdns-59.org, A, 205.251.197.217
+		ns-1497.awsdns-59.org
+			code.org, A, 52.84.8.105
+2.
+	a.
+		www.code.com
+			107.20.189.132	us-east-1
+		
+			
+	b.
+		cdn.optimizely.com
+		
+	c.
+		1 HTTP request to EdgeCast over 1 connection
+	d.
+		44
